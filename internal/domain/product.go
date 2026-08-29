@@ -12,11 +12,11 @@ type Product struct {
 	MerchantID  uuid.UUID `json:"merchant_id"`
 	SKU         string    `json:"sku"`
 	Name        string    `json:"name"`
-	Description string    `json:"description,omitempty"`
+	Description *string   `json:"description,omitempty"`
 	Category    string    `json:"category"`
 	PricePaise  int64     `json:"price_paise"` // Always stored in smallest currency unit (paise)
 	Currency    string    `json:"currency"`
-	ImageURL    string    `json:"image_url,omitempty"`
+	ImageURL    *string   `json:"image_url,omitempty"`
 	ContentHash string    `json:"content_hash"` // Cryptographic hash for integrity verification
 	IsActive    bool      `json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`

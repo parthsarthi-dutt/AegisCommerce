@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 // Config holds all required application configuration.
@@ -17,6 +19,10 @@ type Config struct {
 // Load reads configuration from environment variables.
 // It fails fast if any required variable is missing.
 func Load() (*Config, error) {
+	// Attempt to load .env file. We ignore the error because in production, 
+	// environment variables might be injected directly by Docker/K8s without a .env file.
+	_ = godotenv.Load()
+
 	cfg := &Config{
 		Port:              getEnvOrDefault("PORT", "8080"),
 		DatabaseURL:       os.Getenv("DATABASE_URL"),

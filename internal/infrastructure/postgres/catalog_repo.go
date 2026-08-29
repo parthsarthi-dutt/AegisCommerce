@@ -59,9 +59,9 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, filter domain.Se
 		FROM products p
 		JOIN product_inventory pi ON p.id = pi.product_id
 		WHERE p.merchant_id = $1 AND p.is_active = true
-		  AND ($2 = '' OR p.name ILIKE '%' || $2 || '%' OR p.description ILIKE '%' || $2 || '%')
-		  AND ($3 = '' OR p.category = $3)
-		  AND ($4 = 0 OR p.price_paise <= $4)
+		  AND ($2::text = '' OR p.name ILIKE '%' || $2::text || '%' OR p.description ILIKE '%' || $2::text || '%')
+		  AND ($3::text = '' OR p.category = $3)
+		  AND ($4::bigint = 0 OR p.price_paise <= $4)
 		ORDER BY p.created_at DESC
 		LIMIT $5 OFFSET $6
 	`
