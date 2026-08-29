@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS policy_decisions;
+DROP TABLE IF EXISTS security_events;
+DROP TABLE IF EXISTS audit_events;
+DROP TABLE IF EXISTS idempotency_keys;
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS grant_usage;
+DROP TABLE IF EXISTS authorization_grants;
+DROP TABLE IF EXISTS agents;
+DROP TABLE IF EXISTS product_inventory;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS merchants;
