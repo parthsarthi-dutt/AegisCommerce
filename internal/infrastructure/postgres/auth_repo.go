@@ -70,11 +70,11 @@ func (r *AuthRepository) ReserveUsage(ctx context.Context, grantID uuid.UUID, am
 	// these UPDATEs. The first will succeed. The second will fail the WHERE clause.
 	query := `
 		UPDATE grant_usage gu
-		SET amount_reserved = gu.amount_reserved + $1,
+		SET amount_reserved = gu.amount_reserved + $1::bigint,
 		    updated_at = NOW()
 		FROM authorization_grants ag
-		WHERE gu.grant_id = $2 AND ag.id = gu.grant_id
-		  AND (gu.amount_consumed + gu.amount_reserved + $1) <= ag.max_amount_paise
+		WHERE gu.grant_id = $2::uuid AND ag.id = gu.grant_id
+		  AND (gu.amount_consumed + gu.amount_reserved + $1::bigint) <= ag.max_amount_paise
 	`
 	
 	tag, err := db.Exec(ctx, query, amountPaise, grantID)

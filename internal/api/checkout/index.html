@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Commerce Checkout</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f4f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .checkout-box { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); text-align: center; max-width: 400px; width: 100%; }
+        h1 { font-size: 1.5rem; color: #111827; margin-bottom: 0.5rem; }
+        p { color: #6b7280; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background-color: #2563eb; color: white; border: none; padding: 0.75rem; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .error { color: #dc2626; margin-top: 1rem; font-size: 0.875rem; }
+    </style>
+</head>
+<body>
+    <div class="checkout-box">
+        <h1>Finalize AI Purchase</h1>
+        <p>Your agent has reserved the item. Please complete the payment.</p>
+        <input type="text" id="txIdInput" placeholder="Enter Transaction ID (UUID)" />
+        <button id="payBtn">Pay Now</button>
+        <div id="errorMsg" class="error"></div>
+    </div>
+
+    <!-- Official Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.getElementById('payBtn').addEventListener('click', async () => {
+            const txId = document.getElementById('txIdInput').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.innerText = '';
+
+            if (!txId) {
+                errorMsg.innerText = 'Please enter a Transaction ID.';
+                return;
+            }
+
+            try {
+                // Fetch server-validated configuration (Source of Truth)
+                const response = await fetch(`/checkout/session?transaction_id=${txId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to initialize checkout');
+                }
+
+                const options = {
+                    key: data.key_id, // Safe to expose public Key ID
+                    amount: data.amount,
+                    currency: data.currency,
+                    name: "Agentic Commerce",
+                    description: "AI Agent Authorized Purchase",
+                    order_id: data.order_id,
+                    handler: function (response) {
+                        alert("Payment successful! Razorpay will now fire the webhook via ngrok to our server.");
+                    },
+                    prefill: {
+                        name: "Test User",
+                        email: "test@example.com",
+                        contact: "9999999999"
+                    },
+                    theme: { color: "#2563eb" }
+                };
+                const rzp1 = new Razorpay(options);
+                rzp1.on('payment.failed', function (response){
+                    alert("Payment failed: " + response.error.description);
+                });
+                rzp1.open();
+
+            } catch (err) {
+                errorMsg.innerText = err.message;
+            }
+        });
+    </script>
+</body>
+</html>

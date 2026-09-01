@@ -34,14 +34,16 @@ type AuthorizationRepository interface {
 type TransactionRepository interface {
 	Create(ctx context.Context, tx *Transaction) error
 	Get(ctx context.Context, id uuid.UUID) (*Transaction, error)
+	GetByGatewayOrderID(ctx context.Context, orderID string) (*Transaction, error) // <-- ADD THIS LINE
 	UpdateStatus(ctx context.Context, id uuid.UUID, status TxStatus, reason string) error
-
+	
 	// Idempotency methods prevent double-charging on retries
 	CheckIdempotency(ctx context.Context, key string, scope string) (*Transaction, error)
 	RecordIdempotency(ctx context.Context, key string, scope string, txID uuid.UUID) error
 
 	UpdateGatewayOrder(ctx context.Context, id uuid.UUID, orderID string) error
 }
+
 
 // AuditRepository handles non-repudiation and security tracking.
 type AuditRepository interface {

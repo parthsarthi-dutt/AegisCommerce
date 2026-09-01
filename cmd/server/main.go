@@ -18,7 +18,11 @@ import (
 	"agentic-commerce/pkg/database"
 	"agentic-commerce/pkg/logger"
 	"agentic-commerce/pkg/razorpay"
+	"agentic-commerce/internal/api/webhook"
+    "agentic-commerce/internal/api/checkout"
+	"agentic-commerce/internal/api/dashboard"
 	"github.com/gin-gonic/gin"
+	
 )
 
 func main() {
@@ -80,7 +84,16 @@ func main() {
 
 	// 9. Initialize HTTP Server & Routes
 	router := gin.Default()
-	
+		router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Razorpay-Signature")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
 	// Standard health check for Docker/Kubernetes
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "version": "1.0.0"})
@@ -90,6 +103,14 @@ func main() {
 	mcpHandler := mcp.NewHandler(catalogUC, merchantUC, checkoutUC)
 	mcpHandler.RegisterRoutes(router)
 
+	webhookHandler := webhook.NewHandler(checkoutUC, txRepo, log)
+	webhookHandler.RegisterRoutes(router)
+
+	checkoutHandler := checkout.NewHandler(txRepo)
+	checkoutHandler.RegisterRoutes(router)
+
+	dashboardHandler := dashboard.NewHandler(txManager)
+	dashboardHandler.RegisterRoutes(router)
 	// 10. Graceful Shutdown Implementation (Rule 10.7)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),

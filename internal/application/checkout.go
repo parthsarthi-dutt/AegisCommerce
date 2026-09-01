@@ -128,14 +128,12 @@ func (uc *checkoutUseCase) ProposeTransaction(ctx context.Context, agentID uuid.
 			Quantity:         req.Quantity,
 		}
 
-		// Record the exact reasoning for explainability
-		uc.auditRepo.RecordPolicyDecision(txCtx, newTx.ID, decision)
-
 		if decision.Decision == domain.DecisionDeny {
 			newTx.Status = domain.StatusFailed
 			reason := decision.Reasoning
 			newTx.FailureReason = &reason
 			uc.txRepo.Create(txCtx, newTx)
+			uc.auditRepo.RecordPolicyDecision(txCtx, newTx.ID, decision)
 			uc.txRepo.RecordIdempotency(txCtx, req.IdempotencyKey, "proposal", newTx.ID)
 			return apperrors.NewForbidden(fmt.Sprintf("policy denied: %s", decision.Reasoning), nil)
 		}
@@ -143,6 +141,7 @@ func (uc *checkoutUseCase) ProposeTransaction(ctx context.Context, agentID uuid.
 		// C. Atomic Reservation
 		err = uc.authRepo.ReserveUsage(txCtx, grant.ID, totalAmount)
 		if err != nil {
+			uc.logger.Error("ReserveUsage failed", "error", err)
 			return apperrors.NewForbidden("insufficient limits to reserve amount concurrently", err)
 		}
 
@@ -156,6 +155,8 @@ func (uc *checkoutUseCase) ProposeTransaction(ctx context.Context, agentID uuid.
 		if err != nil {
 			return err
 		}
+		
+		_ = uc.auditRepo.RecordPolicyDecision(txCtx, newTx.ID, decision)
 		
 		createdTx = newTx
 		return nil

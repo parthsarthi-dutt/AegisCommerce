@@ -37,7 +37,7 @@ VALUES (
     'software',
     50000, -- ₹500 (in paise)
     'INR', 
-    'mock_hash_value',
+    '7e9cc1332ee6e26fbd765539751942b735c582aba936961ce85a5c06df817730',
     true, 
     NOW(), 
     NOW()
