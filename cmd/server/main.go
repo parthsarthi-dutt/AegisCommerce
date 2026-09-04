@@ -10,19 +10,21 @@ import (
 	"syscall"
 	"time"
 
+	"agentic-commerce/internal/api/attacklab"
+	"agentic-commerce/internal/api/checkout"
+	"agentic-commerce/internal/api/dashboard"
 	"agentic-commerce/internal/api/mcp"
+	"agentic-commerce/internal/api/middleware"
+	"agentic-commerce/internal/api/webhook"
 	"agentic-commerce/internal/application"
 	"agentic-commerce/internal/config"
 	"agentic-commerce/internal/domain"
 	"agentic-commerce/internal/infrastructure/postgres"
+	rediscache "agentic-commerce/internal/infrastructure/redis"
 	"agentic-commerce/pkg/database"
 	"agentic-commerce/pkg/logger"
 	"agentic-commerce/pkg/razorpay"
-	"agentic-commerce/internal/api/webhook"
-    "agentic-commerce/internal/api/checkout"
-	"agentic-commerce/internal/api/dashboard"
 	"github.com/gin-gonic/gin"
-	
 )
 
 func main() {
@@ -47,27 +49,37 @@ func main() {
 	defer dbPool.Close()
 	log.Info("Connected to PostgreSQL successfully")
 
-	// 4. Initialize Context-Based Transaction Manager
+	// 4. Initialize Redis (optional — degrades gracefully if unavailable)
+	var cache *rediscache.Cache
+	cache, err = rediscache.NewCache(cfg.RedisURL, log)
+	if err != nil {
+		log.Warn("Redis unavailable, running in Postgres-only mode", "error", err)
+		cache = nil // Nil cache = all Redis checks bypassed
+	} else {
+		defer cache.Close()
+	}
+
+	// 5. Initialize Context-Based Transaction Manager
 	txManager := database.NewTransactionManager(dbPool, log)
 
-	// 5. Initialize Repositories (Infrastructure Layer)
+	// 6. Initialize Repositories (Infrastructure Layer)
 	catalogRepo := postgres.NewCatalogRepository(txManager)
 	merchantRepo := postgres.NewMerchantRepository(txManager)
 	authRepo := postgres.NewAuthRepository(txManager)
 	txRepo := postgres.NewTransactionRepository(txManager)
 	auditRepo := postgres.NewAuditRepository(txManager)
 
-	// 6. Initialize External Gateways
+	// 7. Initialize External Gateways
 	paymentGateway := razorpay.NewClient(razorpay.Config{
 		KeyID:     cfg.RazorpayKeyID,
 		KeySecret: cfg.RazorpayKeySecret,
 	})
 
-	// 7. Initialize Domain Services (The Pure Go Brains)
+	// 8. Initialize Domain Services (The Pure Go Brains)
 	policyEngine := domain.NewPolicyEngine()
 	integrityVerifier := domain.NewIntegrityVerifier()
 
-	// 8. Initialize Use Cases (Application Layer)
+	// 9. Initialize Use Cases (Application Layer)
 	catalogUC := application.NewCatalogUseCase(catalogRepo, log)
 	merchantUC := application.NewMerchantUseCase(merchantRepo, log)
 	checkoutUC := application.NewCheckoutUseCase(
@@ -82,21 +94,43 @@ func main() {
 		log,
 	)
 
-	// 9. Initialize HTTP Server & Routes
+	// 10. Start Background Sweeper (Stale Transaction Cleanup)
+	// Runs every 5 minutes, expires payment_pending txs older than 30 minutes
+	sweeper := application.NewSweeper(txRepo, authRepo, auditRepo, log, 5*time.Minute, 30*time.Minute)
+	sweeperCtx, sweeperCancel := context.WithCancel(context.Background())
+	defer sweeperCancel()
+	go sweeper.Run(sweeperCtx)
+
+	// 11. Initialize HTTP Server & Routes
 	router := gin.Default()
-		router.Use(func(c *gin.Context) {
+
+	// CORS Middleware
+	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Razorpay-Signature")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Razorpay-Signature, X-Agent-ID")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
 		c.Next()
 	})
+
+	// Rate Limiting Middleware (Redis-backed, 60 req/min per agent)
+	router.Use(middleware.RateLimiter(cache, 60))
+
 	// Standard health check for Docker/Kubernetes
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok", "version": "1.0.0"})
+		redisStatus := "disconnected"
+		if cache != nil {
+			redisStatus = "connected"
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "ok",
+			"version": "1.0.0",
+			"redis":   redisStatus,
+			"sweeper": "running",
+		})
 	})
 
 	// Register MCP API endpoints
@@ -111,7 +145,12 @@ func main() {
 
 	dashboardHandler := dashboard.NewHandler(txManager)
 	dashboardHandler.RegisterRoutes(router)
-	// 10. Graceful Shutdown Implementation (Rule 10.7)
+
+	// SECURITY ATTACK LAB
+	attackLabHandler := attacklab.NewHandler(checkoutUC, authRepo, catalogRepo, txManager)
+	attackLabHandler.RegisterRoutes(router)
+
+	// 12. Graceful Shutdown Implementation (Rule 10.7)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
 		Handler: router,
@@ -131,6 +170,9 @@ func main() {
 	<-quit
 	
 	log.Info("Interrupt signal received. Shutting down gracefully...")
+
+	// Stop the sweeper first
+	sweeperCancel()
 
 	// 5-second timeout for inflight requests to finish
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

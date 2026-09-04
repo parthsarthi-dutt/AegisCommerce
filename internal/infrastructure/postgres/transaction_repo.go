@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"agentic-commerce/internal/domain"
 	"agentic-commerce/pkg/database"
@@ -165,4 +167,40 @@ func (r *TransactionRepository) GetByGatewayOrderID(ctx context.Context, orderID
 		return nil, err
 	}
 	return &tx, nil
+}
+
+func (r *TransactionRepository) FindStaleTransactions(ctx context.Context, status domain.TxStatus, olderThan time.Duration) ([]domain.Transaction, error) {
+	db := r.tm.GetDB(ctx)
+
+	query := `
+		SELECT id, merchant_id, agent_id, grant_id, session_id, idempotency_key, 
+		       catalog_version_id, status, total_amount_paise, currency, 
+		       product_id, quantity, gateway_order_id, failure_reason, metadata, 
+		       created_at, updated_at
+		FROM transactions
+		WHERE status = $1 AND updated_at < NOW() - $2::INTERVAL
+		ORDER BY updated_at ASC
+		LIMIT 100
+	`
+
+	rows, err := db.Query(ctx, query, status, fmt.Sprintf("%d seconds", int(olderThan.Seconds())))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []domain.Transaction
+	for rows.Next() {
+		var tx domain.Transaction
+		if err := rows.Scan(
+			&tx.ID, &tx.MerchantID, &tx.AgentID, &tx.GrantID, &tx.SessionID, &tx.IdempotencyKey,
+			&tx.CatalogVersionID, &tx.Status, &tx.TotalAmountPaise, &tx.Currency,
+			&tx.ProductID, &tx.Quantity, &tx.GatewayOrderID, &tx.FailureReason, &tx.Metadata,
+			&tx.CreatedAt, &tx.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		transactions = append(transactions, tx)
+	}
+	return transactions, rows.Err()
 }

@@ -35,7 +35,14 @@ func (r *AuthRepository) GetActiveGrant(ctx context.Context, agentID uuid.UUID) 
 		&g.AllowedCategories, &g.DeniedCategories, &g.MaxSingleTransaction,
 		&g.Status, &g.CreatedAt, &g.ExpiresAt, &g.RevokedAt,
 	)
+	
 	if err != nil {
+		// Check if they had ANY grant (meaning it expired rather than never existed)
+		var count int
+		_ = db.QueryRow(ctx, "SELECT COUNT(*) FROM authorization_grants WHERE agent_id = $1", agentID).Scan(&count)
+		if count > 0 {
+			return nil, fmt.Errorf("grant expired")
+		}
 		return nil, err
 	}
 	return &g, nil

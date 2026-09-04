@@ -34,9 +34,11 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 
 	// Agent Capabilities (Tools)
 	api.GET("/products/search", h.SearchProducts)
+	api.GET("/products/:id", h.GetProduct)
 	api.GET("/policies", h.GetPolicies)
 	api.POST("/checkout/propose", h.ProposeTransaction)
 	api.POST("/checkout/execute", h.ExecutePayment)
+	api.POST("/checkout/simulate-capture", h.SimulateCapture) // TEST MODE ONLY
 }
 
 // AgentAuthMiddleware simulates HMAC authentication for the Hackathon MVP.
@@ -83,6 +85,23 @@ func (h *Handler) SearchProducts(c *gin.Context) {
 	}
 	
 	c.JSON(http.StatusOK, gin.H{"data": products})
+}
+
+// Tool: get_product
+func (h *Handler) GetProduct(c *gin.Context) {
+	productID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id format"})
+		return
+	}
+
+	product, err := h.catalogUC.GetProduct(c.Request.Context(), productID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"data": product})
 }
 
 // Tool 2: get_merchant_policies
@@ -137,6 +156,27 @@ func (h *Handler) ExecutePayment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": tx})
 }
 
+// Tool 5: simulate_capture (TEST MODE ONLY)
+// Simulates a Razorpay payment.captured webhook for autonomous AI payment.
+// In production, this would be replaced by a real Razorpay checkout + webhook flow.
+func (h *Handler) SimulateCapture(c *gin.Context) {
+	var req struct {
+		TransactionID uuid.UUID `json:"transaction_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json body"})
+		return
+	}
+
+	err := h.checkoutUC.HandleWebhook(c.Request.Context(), req.TransactionID, "captured")
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "captured", "message": "Payment simulated via Canara Bank Netbanking (Test Mode)"})
+}
+
 // handleError maps domain apperrors to exact HTTP status codes.
 func (h *Handler) handleError(c *gin.Context, err error) {
 	var appErr *apperrors.AppError
@@ -159,3 +199,4 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 	}
 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 }
+

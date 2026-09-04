@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -42,6 +43,10 @@ type TransactionRepository interface {
 	RecordIdempotency(ctx context.Context, key string, scope string, txID uuid.UUID) error
 
 	UpdateGatewayOrder(ctx context.Context, id uuid.UUID, orderID string) error
+
+	// FindStaleTransactions returns transactions in payment_pending state
+	// older than the given age. Used by the background sweeper for cleanup.
+	FindStaleTransactions(ctx context.Context, status TxStatus, olderThan time.Duration) ([]Transaction, error)
 }
 
 

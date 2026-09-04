@@ -1,6 +1,9 @@
 package apperrors
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // ErrorType classifies errors for HTTP status mapping and structured handling.
 // The MCP/REST layer maps these to protocol-appropriate responses.
@@ -66,3 +69,30 @@ func NewIntegrity(msg string, err error) *AppError {
 func NewInternal(msg string, err error) *AppError {
 	return &AppError{Type: TypeInternal, Message: msg, Internal: err}
 }
+
+// IsUnauthorized checks if the error represents an unauthorized condition
+func IsUnauthorized(err error) bool {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Type == TypeUnauthorized
+	}
+	return false
+}
+
+// IsForbidden checks if the error represents a policy denial
+func IsForbidden(err error) bool {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Type == TypeForbidden
+	}
+	return false
+}
+
+// IsIntegrity checks if the error represents a catalog hash mismatch
+func IsIntegrity(err error) bool {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Type == TypeIntegrity
+	}
+	return false
+}

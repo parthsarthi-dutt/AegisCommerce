@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Port              string
 	DatabaseURL       string
+	RedisURL          string
 	RazorpayKeyID     string
 	RazorpayKeySecret string
 	GeminiAPIKey      string
@@ -26,6 +27,7 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		Port:              getEnvOrDefault("PORT", "8080"),
 		DatabaseURL:       os.Getenv("DATABASE_URL"),
+		RedisURL:          getEnvOrDefault("REDIS_URL", "localhost:6379"),
 		RazorpayKeyID:     os.Getenv("RAZORPAY_KEY_ID"),
 		RazorpayKeySecret: os.Getenv("RAZORPAY_KEY_SECRET"),
 		GeminiAPIKey:      os.Getenv("GEMINI_API_KEY"),

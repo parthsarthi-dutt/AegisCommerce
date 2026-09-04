@@ -58,7 +58,8 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, filter domain.Se
 		       pi.quantity, pi.reserved_quantity
 		FROM products p
 		JOIN product_inventory pi ON p.id = pi.product_id
-		WHERE p.merchant_id = $1 AND p.is_active = true
+		WHERE p.is_active = true
+		  AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR p.merchant_id = $1)
 		  AND ($2::text = '' OR p.name ILIKE '%' || $2::text || '%' OR p.description ILIKE '%' || $2::text || '%')
 		  AND ($3::text = '' OR p.category = $3)
 		  AND ($4::bigint = 0 OR p.price_paise <= $4)
