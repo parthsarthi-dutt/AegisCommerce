@@ -1,38 +1,74 @@
 services:
+  # ============================================
+  # Go API / Trust Layer Backend
+  # ============================================
   - type: web
     name: aegiscommerce-api
     runtime: go
     plan: free
-    buildCommand: go build -o api ./cmd/server && go build -o api-migrate ./cmd/migrate
+
+    buildCommand: |
+      go build -o api ./cmd/server
+      go build -o api-migrate ./cmd/migrate
+
     startCommand: ./api-migrate && ./api
+
     healthCheckPath: /health
+
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: aegiscommerce-db
           property: connectionString
+
+      - key: REDIS_URL
+        fromService:
+          name: aegiscommerce-redis
+          type: keyvalue
+          property: connectionString
+
       - key: RAZORPAY_KEY_ID
         sync: false
+
       - key: RAZORPAY_KEY_SECRET
         sync: false
+
       - key: RAZORPAY_WEBHOOK_SECRET
         sync: false
 
+
+  # ============================================
+  # Next.js Dashboard / AI Revenue Agent
+  # ============================================
   - type: web
     name: aegiscommerce-dashboard
     runtime: node
     plan: free
+
     rootDir: frontend
+
     buildCommand: npm ci --include=dev && npm run build
+
     startCommand: npm run start
+
     envVars:
-      - key: BACKEND_URL
-        # Free Render web services can send, but cannot receive, private-network
-        # traffic. Use the API's public URL until the API is upgraded to a paid
-        # web/private service.
+      - key: NEXT_PUBLIC_BACKEND_URL
         value: https://aegiscommerce-api.onrender.com/mcp/v1
+
+      - key: BACKEND_URL
+        value: https://aegiscommerce-api.onrender.com/mcp/v1
+
       - key: GROQ_API_KEY
         sync: false
+
+
+  # ============================================
+  # Redis-compatible cache
+  # ============================================
+  - type: keyvalue
+    name: aegiscommerce-redis
+    plan: free
+
 
 databases:
   - name: aegiscommerce-db
