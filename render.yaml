@@ -16,17 +16,20 @@ services:
     healthCheckPath: /health
 
     envVars:
+      # PostgreSQL
       - key: DATABASE_URL
         fromDatabase:
           name: aegiscommerce-db
           property: connectionString
 
+      # Redis / Render Key Value
       - key: REDIS_URL
         fromService:
           name: aegiscommerce-redis
           type: keyvalue
           property: connectionString
 
+      # Razorpay
       - key: RAZORPAY_KEY_ID
         sync: false
 
@@ -52,24 +55,36 @@ services:
     startCommand: npm run start
 
     envVars:
+      # Backend MCP URL
       - key: NEXT_PUBLIC_BACKEND_URL
         value: https://aegiscommerce-api.onrender.com/mcp/v1
 
+      # Server-side backend URL
       - key: BACKEND_URL
         value: https://aegiscommerce-api.onrender.com/mcp/v1
 
+      # Groq
       - key: GROQ_API_KEY
         sync: false
 
 
   # ============================================
-  # Redis-compatible cache
+  # Redis-compatible Key Value
   # ============================================
   - type: keyvalue
     name: aegiscommerce-redis
     plan: free
 
+    # Empty = no public internet access.
+    # Your Go API can still access it internally.
+    ipAllowList: []
 
+    maxmemoryPolicy: allkeys-lru
+
+
+# ============================================
+# PostgreSQL
+# ============================================
 databases:
   - name: aegiscommerce-db
     plan: free
