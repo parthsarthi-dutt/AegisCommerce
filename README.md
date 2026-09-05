@@ -1,4 +1,4 @@
-**# AegisCommerce: The Future of Agentic Commerce**
+# AegisCommerce: The Future of Agentic Commerce
 
 > **Live Demo:** https://aegiscommerce-dashboard.onrender.com/  
 > **5-Minute Pitch Video:** https://drive.google.com/file/d/1Req2npkMmkQv3btxhoG9sbMKAS8LVGnU/view  
@@ -9,7 +9,7 @@
 
 \---
 
-**## 📖 The Open Problem: The Agentic Commerce Era**
+## 📖 The Open Problem: The Agentic Commerce Era
 
 We are witnessing a paradigm shift. With the rapid evolution of agent-to-agent protocols (like UAP, ACP, AP2) and the global protocol race, AI agents are transitioning from mere chatbots into fully autonomous buyers, negotiators, and sellers. 
 
@@ -23,9 +23,9 @@ If a merchant exposes their catalog to an AI buyer, how do they ensure the AI do
 
 \---
 
-**## 🚀 The Narrative: Driving Merchant Revenue**
+## 🚀 The Narrative: Driving Merchant Revenue
 
-**### 1. The Conversational Upsell (Growing the Basket Size)**
+### 1. The Conversational Upsell (Growing the Basket Size)
 
 The customer journey begins on the frontend with the **\*\*AI Revenue Agent\*\***. When a buyer expresses intent to purchase a base product (e.g., an *\*"AI Developer Plan"\**), the agent doesn't just passively process it. 
 
@@ -33,7 +33,7 @@ It actively works to grow the merchant's revenue. By analyzing the context, it r
 
 This translates to higher average basket sizes and immediate, measurable revenue lift for the merchant.
 
-**### 2. The Trust Layer: Bounded & Gated Execution**
+### 2. The Trust Layer: Bounded & Gated Execution
 
 Once the agent proposes this financial action, the raw LLM output hits the **\*\*Trust Layer\*\***—a deterministic Go monolith acting as the immutable gatekeeper. The LLM is strictly decoupled from the physical payment rails. 
 
@@ -43,7 +43,7 @@ Once the agent proposes this financial action, the raw LLM output hits the **\*\
 
 \- **\*\*Distributed Idempotency Engine:\*\*** AI agents can stutter, enter infinite loops, or fire duplicate network events. The backend uses strict distributed idempotency locks (backed by PostgreSQL/Redis) to guarantee exactly-once execution. A duplicate intent is recognized, the execution is halted, and the original transaction state is gracefully returned.
 
-**### 3. The Reservation-Based Saga (Handling Failures Gracefully)**
+### 3. The Reservation-Based Saga (Handling Failures Gracefully)
 
 Financial state transitions are delicate, and network partitions happen. AegisCommerce implements a robust Reservation Saga (a Finite State Machine) to handle these failures gracefully without causing budget leaks.
 
@@ -53,7 +53,7 @@ Financial state transitions are delicate, and network partitions happen. AegisCo
 
 \- **\*\*Phase 3: The Goroutine Sweeper:\*\*** If a user abandons a checkout window, or if a webhook fails to arrive due to a network partition, a background Goroutine Sweeper actively patrols the database. Stale \`authorized\` or \`payment\_pending\` transactions are gracefully expired after a set threshold (e.g., 30 days). Reserved limits are safely released back to the agent's pool. **\*\*One failure handled gracefully.\*\***
 
-**### 4. Full Auditability: Every Action Explainable**
+### 4. Full Auditability: Every Action Explainable
 
 A core requirement for agent-to-agent commerce is absolute transparency. Human operators must be able to trust the machine. AegisCommerce features an **\*\*Interactive Command Center\*\*** that acts as the single pane of glass:
 
@@ -63,7 +63,7 @@ A core requirement for agent-to-agent commerce is absolute transparency. Human o
 
 \---
 
-**## 🛡️ The Security Attack Lab (Proving the Defenses)**
+## 🛡️ The Security Attack Lab (Proving the Defenses)
 
 To definitively prove that the Trust Layer is impenetrable and handles edge-case failures gracefully, AegisCommerce ships with a built-in **\*\*Threat Simulation Lab\*\*** accessible right from the dashboard.
 
@@ -93,7 +93,7 @@ To definitively prove that the Trust Layer is impenetrable and handles edge-case
 
 \---
 
-**## 🛠️ Tech Stack & Architecture**
+## 🛠️ Tech Stack & Architecture
 
 \- **\*\*Backend Trust Layer\*\***: Go (Gin, pgx, go-redis) - Chosen for strict typing, deterministic execution, and high-concurrency Goroutines.
 
@@ -105,7 +105,7 @@ To definitively prove that the Trust Layer is impenetrable and handles edge-case
 
 \---
 
-**## 🎥 Quick Demo
+## 🎥 Quick Demo
 
 The deployed application demonstrates the complete agentic commerce flow:
 
@@ -120,9 +120,9 @@ The deployed application demonstrates the complete agentic commerce flow:
 
 ---
 
-**## 💻 Local Setup & Deployment Guide**
+## 💻 Local Setup & Deployment Guide
 
-**### Deploy to Render**
+### Deploy to Render
 
 This repository includes a Render Blueprint at \`render.yaml\`. It deploys a Go API, a public Next.js dashboard, and a managed PostgreSQL database. The API initializes the schema and demo data before it starts, so a new database needs no manual migration steps.
 
@@ -136,7 +136,7 @@ This is a demo environment: the attack lab and \`simulate-capture\` endpoint del
 
 This project is built to be run locally with minimal configuration overhead. Follow these steps to spin up the entire Agentic Commerce environment.
 
-**### 1. Prerequisites**
+### 1. Prerequisites
 
 Ensure you have the following installed on your machine:
 
@@ -146,7 +146,7 @@ Ensure you have the following installed on your machine:
 
 \- **\*\*Docker & Docker Compose\*\*** (for spinning up the required database and cache)
 
-**### 2. Spin up Infrastructure**
+### 2. Spin up Infrastructure
 
 We use Docker to instantly spin up the required PostgreSQL database and Redis cache. Run the provided compose file:
 
@@ -158,7 +158,7 @@ docker-compose up -d
 
 *\*Note: Postgres is configured to run on port 5455 (to avoid conflicts with local DBs), and Redis on 6379.\**
 
-**### 3. Initialize the Database**
+### 3. Initialize the Database
 
 The backend requires the relational schema and initial seed data to exist.
 
@@ -184,7 +184,7 @@ psql postgres\://commerce\_user\:commerce\_password\@127.0.0.1:5455/agentic\_com
 
 \`\`\`
 
-**### 4. Start the Trust Layer (Backend)**
+### 4. Start the Trust Layer (Backend)
 
 Navigate to the root directory of the project and start the Go server:
 
@@ -196,7 +196,7 @@ go run cmd/server/main.go
 
 *\*The API will start successfully and bind to \`http\://localhost:8080\`. You should see terminal logs indicating successful connections to Postgres and Redis.\**
 
-**### 5. Start the Command Center (Frontend)**
+### 5. Start the Command Center (Frontend)
 
 Open a new terminal window, navigate into the \`frontend\` directory, install the required node modules, and start the development server:
 
@@ -214,7 +214,7 @@ pnpm run dev
 
 \---
 
-**## 🎮 Interacting with the Platform**
+## 🎮 Interacting with the Platform
 
 Once both the backend and frontend are running, you can explore the full lifecycle of an Agentic Commerce transaction:
 
