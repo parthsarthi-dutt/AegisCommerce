@@ -2,7 +2,8 @@ import crypto from 'crypto';
 
 const FULL_AGENT_ID = '22222222-2222-2222-2222-222222222222';
 const MERCHANT_ID = '11111111-1111-1111-1111-111111111111';
-const BACKEND_URL = 'http://127.0.0.1:8080/mcp/v1';
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080/mcp/v1';
 
 // This route handles DETERMINISTIC purchase execution.
 // No LLM involved. The frontend sends the exact product data

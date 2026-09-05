@@ -150,9 +150,9 @@ export function SecurityView() {
        * ------------------------------------------------
        */
 
-      const backendPromise = fetch(
-        'http://localhost:8080/api/attacklab/run',
-        {
+     const backendPromise = fetch(
+  `${process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/mcp\/v1$/, '') || 'http://localhost:8080'}/api/attacklab/run`,
+  {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
-const BACKEND_URL = 'http://127.0.0.1:8080/api/grant';
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080/mcp/v1';
 
 export async function GET(req: Request) {
   try {
