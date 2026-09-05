@@ -1264,12 +1264,20 @@ function GrantSettingsPanel() {
   const [updating, setUpdating] = useState(false);
   const [newLimit, setNewLimit] = useState("");
 
+  const asPaise = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
   const fetchGrant = async () => {
     try {
       const res = await fetch("/api/grant");
+      if (!res.ok) {
+        throw new Error(`Failed to load grant: HTTP ${res.status}`);
+      }
       const data = await res.json();
       setGrant(data);
-      setNewLimit((data.max_amount / 100).toString());
+      setNewLimit((asPaise(data.max_amount) / 100).toString());
     } catch (e) {
       console.error(e);
     } finally {
@@ -1303,6 +1311,9 @@ function GrantSettingsPanel() {
     </div>
   );
 
+  const consumed = asPaise(grant?.consumed);
+  const reserved = asPaise(grant?.reserved);
+
   return (
     <div className="flex h-full min-h-[650px] flex-col rounded-xl border border-white/[0.08] bg-white/[0.02] p-6">
       <div className="mb-6 border-b border-white/[0.08] pb-4">
@@ -1317,11 +1328,11 @@ function GrantSettingsPanel() {
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-lg border border-white/[0.06] bg-black/40 p-4">
             <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-1">Consumed</div>
-            <div className="text-2xl font-mono text-emerald-400">{inr(grant?.consumed / 100)}</div>
+            <div className="text-2xl font-mono text-emerald-400">{inr(consumed / 100)}</div>
           </div>
           <div className="rounded-lg border border-white/[0.06] bg-black/40 p-4">
             <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-1">Reserved</div>
-            <div className="text-2xl font-mono text-amber-400">{inr(grant?.reserved / 100)}</div>
+            <div className="text-2xl font-mono text-amber-400">{inr(reserved / 100)}</div>
           </div>
         </div>
 

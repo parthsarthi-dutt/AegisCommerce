@@ -222,7 +222,10 @@ When the customer explicitly says yes or confirms that they want to buy a produc
               searchCatalogTool,
               initiatePurchaseTool
             ],
-            temperature: 0.2
+            temperature: 0.2,
+            // The free Groq tier allows 1,000 output tokens/minute. A catalog
+            // lookup can require two model calls, so keep each completion bounded.
+            max_tokens: 400
           })
         }
       );

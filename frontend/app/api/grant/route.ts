@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 
 const BACKEND_URL =
   process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080/mcp/v1';
+const API_BASE_URL = BACKEND_URL.replace(/\/mcp\/v1$/, '');
 
 export async function GET(req: Request) {
   try {
-    const res = await fetch(BACKEND_URL, {
+    const res = await fetch(`${API_BASE_URL}/api/grant`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store'
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const res = await fetch(BACKEND_URL, {
+    const res = await fetch(`${API_BASE_URL}/api/grant`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
