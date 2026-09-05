@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- 1. Merchants
 CREATE TABLE merchants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

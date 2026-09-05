@@ -74,6 +74,16 @@ To definitively prove that the Trust Layer is impenetrable and handles edge-case
 
 ## 💻 Local Setup & Deployment Guide
 
+### Deploy to Render
+
+This repository includes a Render Blueprint at `render.yaml`. It deploys a Go API, a public Next.js dashboard, and a managed PostgreSQL database. The API initializes the schema and demo data before it starts, so a new database needs no manual migration steps.
+
+1. Push this repository to GitHub, then in Render select **New > Blueprint** and select the repository.
+2. During Blueprint setup, enter test-mode `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` values for the API, and a `GROQ_API_KEY` for the dashboard. Never commit these values.
+3. Create the Blueprint and wait for both web services to finish. Open the `aegiscommerce-dashboard` URL. The dashboard calls the API over Render's private network.
+
+This is a demo environment: the attack lab and `simulate-capture` endpoint deliberately support test flows. Use Razorpay test keys only; do not expose this deployment to real payment traffic without adding user authentication, restricting CORS, and removing test-only endpoints.
+
 This project is built to be run locally with minimal configuration overhead. Follow these steps to spin up the entire Agentic Commerce environment.
 
 ### 1. Prerequisites
