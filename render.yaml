@@ -27,7 +27,10 @@ services:
     startCommand: npm run start
     envVars:
       - key: BACKEND_URL
-        value: http://aegiscommerce-api:10000/mcp/v1
+        # Free Render web services can send, but cannot receive, private-network
+        # traffic. Use the API's public URL until the API is upgraded to a paid
+        # web/private service.
+        value: https://aegiscommerce-api.onrender.com/mcp/v1
       - key: GROQ_API_KEY
         sync: false
 

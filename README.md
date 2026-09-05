@@ -80,7 +80,7 @@ This repository includes a Render Blueprint at `render.yaml`. It deploys a Go AP
 
 1. Push this repository to GitHub, then in Render select **New > Blueprint** and select the repository.
 2. During Blueprint setup, enter test-mode `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` values for the API, and a `GROQ_API_KEY` for the dashboard. Never commit these values.
-3. Create the Blueprint and wait for both web services to finish. Open the `aegiscommerce-dashboard` URL. The dashboard calls the API over Render's private network.
+3. Create the Blueprint and wait for both web services to finish. Open the `aegiscommerce-dashboard` URL. On the free plan, the dashboard calls the API's public Render URL; if you upgrade the API to a paid/private service, replace `BACKEND_URL` with its internal address.
 
 This is a demo environment: the attack lab and `simulate-capture` endpoint deliberately support test flows. Use Razorpay test keys only; do not expose this deployment to real payment traffic without adding user authentication, restricting CORS, and removing test-only endpoints.
 
